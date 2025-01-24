@@ -3,9 +3,35 @@ import { Order, OrderItem, OrderStatus } from '../types/Order';
 
 const BASE_URL = '/odata/Orders';
 
+interface OrderSearchParams {
+    orderNumber?: string;
+    customerName?: string;
+    status?: string;
+}
+
 export class OrderService {
-    static async getOrders(): Promise<Order[]> {
-        const response = await axios.get(BASE_URL);
+    static async getOrders(params?: OrderSearchParams): Promise<Order[]> {
+        let url = BASE_URL;
+        
+        if (params) {
+            const filters: string[] = [];
+            
+            if (params.orderNumber) {
+                filters.push(`contains(OrderNumber,'${params.orderNumber}')`);
+            }
+            if (params.customerName) {
+                filters.push(`contains(CustomerName,'${params.customerName}')`);
+            }
+            if (params.status) {
+                filters.push(`Status eq '${params.status}'`);
+            }
+            
+            if (filters.length > 0) {
+                url += `?$filter=${filters.join(' and ')}`;
+            }
+        }
+        
+        const response = await axios.get(url);
         return response.data.value;
     }
 

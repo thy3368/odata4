@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, message } from 'antd';
+import { Table, Button, Space, message, Form, Input, Select, Card, Row, Col } from 'antd';
 import { OrderService } from '../services/OrderService';
-import { Order } from '../types/Order';
+import { Order, OrderStatus } from '../types/Order';
 import { useNavigate } from 'react-router-dom';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+
+interface OrderSearchParams {
+    orderNumber?: string;
+    customerName?: string;
+    status?: OrderStatus;
+}
 
 export const OrderList: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(false);
+    const [searchForm] = Form.useForm();
     const navigate = useNavigate();
 
-    const loadOrders = async () => {
+    const loadOrders = async (params?: OrderSearchParams) => {
         try {
             setLoading(true);
-            const data = await OrderService.getOrders();
+            const data = await OrderService.getOrders(params);
             setOrders(data);
         } catch (error) {
             message.error('Failed to load orders');
@@ -25,11 +33,20 @@ export const OrderList: React.FC = () => {
         loadOrders();
     }, []);
 
+    const handleSearch = async (values: OrderSearchParams) => {
+        await loadOrders(values);
+    };
+
+    const handleReset = () => {
+        searchForm.resetFields();
+        loadOrders();
+    };
+
     const handleDelete = async (id: number) => {
         try {
             await OrderService.deleteOrder(id);
             message.success('Order deleted successfully');
-            loadOrders();
+            loadOrders(searchForm.getFieldsValue());
         } catch (error) {
             message.error('Failed to delete order');
         }
@@ -37,44 +54,44 @@ export const OrderList: React.FC = () => {
 
     const columns = [
         {
-            title: 'Order Number',
+            title: '订单编号',
             dataIndex: 'orderNumber',
             key: 'orderNumber',
         },
         {
-            title: 'Customer',
+            title: '客户名称',
             dataIndex: 'customerName',
             key: 'customerName',
         },
         {
-            title: 'Status',
+            title: '订单状态',
             dataIndex: 'status',
             key: 'status',
         },
         {
-            title: 'Total Amount',
+            title: '订单金额',
             dataIndex: 'totalAmount',
             key: 'totalAmount',
             render: (amount: number | null | undefined) => {
                 if (amount === null || amount === undefined) {
-                    return '$0.00';
+                    return '¥0.00';
                 }
-                return `$${amount.toFixed(2)}`;
+                return `¥${amount.toFixed(2)}`;
             },
         },
         {
-            title: 'Actions',
+            title: '操作',
             key: 'actions',
             render: (_: any, record: Order) => (
                 <Space>
                     <Button onClick={() => navigate(`/orders/${record.id}`)}>
-                        View
+                        查看
                     </Button>
                     <Button onClick={() => navigate(`/orders/${record.id}/edit`)}>
-                        Edit
+                        编辑
                     </Button>
                     <Button danger onClick={() => handleDelete(record.id!)}>
-                        Delete
+                        删除
                     </Button>
                 </Space>
             ),
@@ -83,17 +100,72 @@ export const OrderList: React.FC = () => {
 
     return (
         <div>
-            <div style={{ marginBottom: 16 }}>
-                <Button type="primary" onClick={() => navigate('/orders/new')}>
-                    Create New Order
-                </Button>
-            </div>
-            <Table
-                columns={columns}
-                dataSource={orders}
-                rowKey="id"
-                loading={loading}
-            />
+            <Card style={{ marginBottom: 16 }}>
+                <Form
+                    form={searchForm}
+                    onFinish={handleSearch}
+                    layout="vertical"
+                >
+                    <Row gutter={16}>
+                        <Col span={6}>
+                            <Form.Item name="orderNumber" label="订单编号">
+                                <Input placeholder="请输入订单编号" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="customerName" label="客户名称">
+                                <Input placeholder="请输入客户名称" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="status" label="订单状态">
+                                <Select 
+                                    allowClear 
+                                    placeholder="请选择订单状态"
+                                >
+                                    {Object.values(OrderStatus).map(status => (
+                                        <Select.Option key={status} value={status}>
+                                            {status}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                            <Space>
+                                <Button 
+                                    type="primary" 
+                                    htmlType="submit" 
+                                    icon={<SearchOutlined />}
+                                >
+                                    查询
+                                </Button>
+                                <Button 
+                                    onClick={handleReset}
+                                    icon={<ReloadOutlined />}
+                                >
+                                    重置
+                                </Button>
+                            </Space>
+                        </Col>
+                    </Row>
+                </Form>
+            </Card>
+
+            <Card>
+                <div style={{ marginBottom: 16 }}>
+                    <Button type="primary" onClick={() => navigate('/orders/new')}>
+                        新建订单
+                    </Button>
+                </div>
+
+                <Table
+                    columns={columns}
+                    dataSource={orders}
+                    rowKey="id"
+                    loading={loading}
+                />
+            </Card>
         </div>
     );
 }; 

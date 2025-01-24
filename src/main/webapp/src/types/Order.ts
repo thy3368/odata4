@@ -1,9 +1,9 @@
 export enum OrderStatus {
-    DRAFT = 'DRAFT',
-    CONFIRMED = 'CONFIRMED',
-    SHIPPED = 'SHIPPED',
-    DELIVERED = 'DELIVERED',
-    CANCELLED = 'CANCELLED'
+    DRAFT = '草稿',
+    PENDING = '待处理',
+    PROCESSING = '处理中',
+    COMPLETED = '已完成',
+    CANCELLED = '已取消'
 }
 
 export interface OrderItem {

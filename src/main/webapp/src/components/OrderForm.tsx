@@ -35,7 +35,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({ mode = 'create' }) => {
             const order = await OrderService.getOrder(orderId);
             form.setFieldsValue(order);
         } catch (error) {
-            message.error('Failed to load order');
+            message.error('加载订单失败');
             navigate('/orders');
         } finally {
             setLoading(false);
@@ -47,14 +47,14 @@ export const OrderForm: React.FC<OrderFormProps> = ({ mode = 'create' }) => {
             setLoading(true);
             if (mode === 'edit' && id) {
                 await OrderService.updateOrder(parseInt(id), values);
-                message.success('Order updated successfully');
+                message.success('订单更新成功');
             } else {
                 await OrderService.createOrder(values as Omit<Order, 'id'>);
-                message.success('Order created successfully');
+                message.success('订单创建成功');
             }
             navigate('/orders');
         } catch (error) {
-            message.error(`Failed to ${mode} order`);
+            message.error(mode === 'create' ? '创建订单失败' : '更新订单失败');
         } finally {
             setLoading(false);
         }
@@ -70,20 +70,22 @@ export const OrderForm: React.FC<OrderFormProps> = ({ mode = 'create' }) => {
                 items: [],
             }}
         >
+            <h2>{mode === 'create' ? '新建订单' : '编辑订单'}</h2>
+
             <Form.Item
                 name="orderNumber"
-                label="Order Number"
-                rules={[{ required: true, message: 'Please input order number' }]}
+                label="订单编号"
+                rules={[{ required: true, message: '请输入订单编号' }]}
             >
-                <Input />
+                <Input placeholder="请输入订单编号" />
             </Form.Item>
 
             <Form.Item
                 name="status"
-                label="Status"
-                rules={[{ required: true, message: 'Please select status' }]}
+                label="订单状态"
+                rules={[{ required: true, message: '请选择订单状态' }]}
             >
-                <Select>
+                <Select placeholder="请选择订单状态">
                     {Object.values(OrderStatus).map(status => (
                         <Select.Option key={status} value={status}>
                             {status}
@@ -94,25 +96,25 @@ export const OrderForm: React.FC<OrderFormProps> = ({ mode = 'create' }) => {
 
             <Form.Item
                 name="customerName"
-                label="Customer Name"
-                rules={[{ required: true, message: 'Please input customer name' }]}
+                label="客户名称"
+                rules={[{ required: true, message: '请输入客户名称' }]}
             >
-                <Input />
+                <Input placeholder="请输入客户名称" />
             </Form.Item>
 
             <Form.Item
                 name="customerEmail"
-                label="Customer Email"
-                rules={[{ type: 'email', message: 'Please input valid email' }]}
+                label="客户邮箱"
+                rules={[{ type: 'email', message: '请输入有效的邮箱地址' }]}
             >
-                <Input />
+                <Input placeholder="请输入客户邮箱" />
             </Form.Item>
 
             <Form.Item
                 name="customerPhone"
-                label="Customer Phone"
+                label="客户电话"
             >
-                <Input />
+                <Input placeholder="请输入客户电话" />
             </Form.Item>
 
             <Form.List name="items">
@@ -123,36 +125,37 @@ export const OrderForm: React.FC<OrderFormProps> = ({ mode = 'create' }) => {
                                 <Form.Item
                                     {...restField}
                                     name={[name, 'productCode']}
-                                    rules={[{ required: true, message: 'Missing product code' }]}
+                                    rules={[{ required: true, message: '请输入商品编码' }]}
                                 >
-                                    <Input placeholder="Product Code" />
+                                    <Input placeholder="商品编码" />
                                 </Form.Item>
                                 <Form.Item
                                     {...restField}
                                     name={[name, 'productName']}
-                                    rules={[{ required: true, message: 'Missing product name' }]}
+                                    rules={[{ required: true, message: '请输入商品名称' }]}
                                 >
-                                    <Input placeholder="Product Name" />
+                                    <Input placeholder="商品名称" />
                                 </Form.Item>
                                 <Form.Item
                                     {...restField}
                                     name={[name, 'unitPrice']}
-                                    rules={[{ required: true, message: 'Missing unit price' }]}
+                                    rules={[{ required: true, message: '请输入单价' }]}
                                 >
                                     <InputNumber
-                                        placeholder="Unit Price"
+                                        placeholder="单价"
                                         min={0}
                                         precision={2}
                                         style={{ width: '150px' }}
+                                        prefix="¥"
                                     />
                                 </Form.Item>
                                 <Form.Item
                                     {...restField}
                                     name={[name, 'quantity']}
-                                    rules={[{ required: true, message: 'Missing quantity' }]}
+                                    rules={[{ required: true, message: '请输入数量' }]}
                                 >
                                     <InputNumber
-                                        placeholder="Quantity"
+                                        placeholder="数量"
                                         min={1}
                                         style={{ width: '100px' }}
                                     />
@@ -167,24 +170,24 @@ export const OrderForm: React.FC<OrderFormProps> = ({ mode = 'create' }) => {
                                 block
                                 icon={<PlusOutlined />}
                             >
-                                Add Item
+                                添加商品
                             </Button>
                         </Form.Item>
                     </>
                 )}
             </Form.List>
 
-            <Form.Item name="notes" label="Notes">
-                <Input.TextArea />
+            <Form.Item name="notes" label="备注">
+                <Input.TextArea placeholder="请输入备注信息" />
             </Form.Item>
 
             <Form.Item>
                 <Space>
                     <Button type="primary" htmlType="submit" loading={loading}>
-                        {mode === 'create' ? 'Create' : 'Update'} Order
+                        {mode === 'create' ? '创建' : '更新'}订单
                     </Button>
                     <Button onClick={() => navigate('/orders')}>
-                        Cancel
+                        取消
                     </Button>
                 </Space>
             </Form.Item>
