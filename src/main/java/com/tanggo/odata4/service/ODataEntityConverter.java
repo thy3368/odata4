@@ -27,6 +27,7 @@ public class ODataEntityConverter {
         e.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, order.getId()));
         e.addProperty(new Property(null, "OrderNumber", ValueType.PRIMITIVE, order.getOrderNumber()));
         e.addProperty(new Property(null, "Status", ValueType.ENUM, order.getStatus().name()));
+        e.addProperty(new Property(null, "StatusDisplay", ValueType.PRIMITIVE, order.getStatus().getDisplayName()));
         e.addProperty(new Property(null, "CustomerName", ValueType.PRIMITIVE, order.getCustomerName()));
         e.addProperty(new Property(null, "CustomerEmail", ValueType.PRIMITIVE, order.getCustomerEmail()));
         e.addProperty(new Property(null, "CustomerPhone", ValueType.PRIMITIVE, order.getCustomerPhone()));

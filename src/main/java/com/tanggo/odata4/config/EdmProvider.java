@@ -28,6 +28,15 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
     
     // Entity Set Names
     public static final String ES_ORDERS_NAME = "Orders";
+    public static final String ES_ORDER_ITEMS_NAME = "OrderItems";
+
+    // 添加操作定义
+    public static final FullQualifiedName ACTION_AUDIT_ORDER = 
+        new FullQualifiedName(NAMESPACE, "AuditOrder");
+    public static final FullQualifiedName ACTION_GET_PREV_ORDER = 
+        new FullQualifiedName(NAMESPACE, "GetPrevOrder");
+    public static final FullQualifiedName ACTION_GET_NEXT_ORDER = 
+        new FullQualifiedName(NAMESPACE, "GetNextOrder");
 
     @Override
     public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
@@ -149,20 +158,78 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
                         .setNavigationPropertyBindings(Collections.singletonList(
                                 new CsdlNavigationPropertyBinding()
                                         .setPath("Items")
-                                        .setTarget("OrderItems")));
+                                        .setTarget(ES_ORDER_ITEMS_NAME)));
+            }
+            if (entitySetName.equals(ES_ORDER_ITEMS_NAME)) {
+                return new CsdlEntitySet()
+                        .setName(ES_ORDER_ITEMS_NAME)
+                        .setType(ET_ORDER_ITEM_FQN)
+                        .setNavigationPropertyBindings(Collections.singletonList(
+                                new CsdlNavigationPropertyBinding()
+                                        .setPath("Order")
+                                        .setTarget(ES_ORDERS_NAME)));
             }
         }
         return null;
     }
 
     @Override
+    public List<CsdlAction> getActions(FullQualifiedName actionName) {
+        if (actionName.equals(ACTION_AUDIT_ORDER)) {
+            // 审核订单操作
+            CsdlParameter bindingParameter = new CsdlParameter()
+                .setName("orderId")
+                .setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName())
+                .setNullable(false);
+
+            return Collections.singletonList(
+                new CsdlAction()
+                    .setName(ACTION_AUDIT_ORDER.getName())
+                    .setParameters(Collections.singletonList(bindingParameter))
+                    .setReturnType(new CsdlReturnType().setType(ET_ORDER_FQN))
+            );
+        }
+        if (actionName.equals(ACTION_GET_PREV_ORDER) || 
+            actionName.equals(ACTION_GET_NEXT_ORDER)) {
+            // 获取前一个或后一个订单操作
+            CsdlParameter bindingParameter = new CsdlParameter()
+                .setName("orderId")
+                .setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName())
+                .setNullable(false);
+
+            return Collections.singletonList(
+                new CsdlAction()
+                    .setName(actionName.getName())
+                    .setParameters(Collections.singletonList(bindingParameter))
+                    .setReturnType(new CsdlReturnType().setType(ET_ORDER_FQN))
+            );
+        }
+        return null;
+    }
+
+    @Override
     public CsdlEntityContainer getEntityContainer() {
-        List<CsdlEntitySet> entitySets = new ArrayList<>();
-        entitySets.add(getEntitySet(CONTAINER, ES_ORDERS_NAME));
-        
+        List<CsdlActionImport> actions = Arrays.asList(
+            new CsdlActionImport()
+                .setName("AuditOrder")
+                .setAction(ACTION_AUDIT_ORDER),
+            new CsdlActionImport()
+                .setName("GetPrevOrder")
+                .setAction(ACTION_GET_PREV_ORDER),
+            new CsdlActionImport()
+                .setName("GetNextOrder")
+                .setAction(ACTION_GET_NEXT_ORDER)
+        );
+
+        List<CsdlEntitySet> entitySets = Arrays.asList(
+            getEntitySet(CONTAINER, ES_ORDERS_NAME),
+            getEntitySet(CONTAINER, ES_ORDER_ITEMS_NAME)
+        );
+
         return new CsdlEntityContainer()
-                .setName(CONTAINER_NAME)
-                .setEntitySets(entitySets);
+            .setName(CONTAINER_NAME)
+            .setEntitySets(entitySets)
+            .setActionImports(actions);
     }
 
     @Override

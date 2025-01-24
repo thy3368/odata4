@@ -101,4 +101,43 @@ export class OrderService {
             }
         });
     }
+
+    static async auditOrder(id: number): Promise<Order> {
+        const response = await axios.post(`${BASE_URL}/AuditOrder`, {
+            orderId: id
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'OData-Version': '4.0'
+            }
+        });
+        return response.data;
+    }
+
+    static async getPrevOrder(id: number): Promise<Order> {
+        const response = await axios.post(`${BASE_URL}/GetPrevOrder`, {
+            orderId: id
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'OData-Version': '4.0'
+            }
+        });
+        return response.data;
+    }
+
+    static async getNextOrder(id: number): Promise<Order> {
+        const response = await axios.post(`${BASE_URL}/GetNextOrder`, {
+            orderId: id
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'OData-Version': '4.0'
+            }
+        });
+        return response.data;
+    }
 } 
