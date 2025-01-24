@@ -11,8 +11,8 @@ const App: React.FC = () => {
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<Navigate to="/orders" replace />} />
                     <Route path="orders" element={<OrderList />} />
-                    <Route path="orders/new" element={<OrderForm />} />
-                    <Route path="orders/:id/edit" element={<OrderForm />} />
+                    <Route path="orders/new" element={<OrderForm mode="create" />} />
+                    <Route path="orders/:id/edit" element={<OrderForm mode="edit" />} />
                 </Route>
             </Routes>
         </Router>

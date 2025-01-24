@@ -13,14 +13,14 @@ import { Order, OrderStatus } from '../types/Order';
 import { OrderService } from '../services/OrderService';
 import { useNavigate, useParams } from 'react-router-dom';
 
-interface OrderFormProps {
-    mode: 'create' | 'edit';
+export interface OrderFormProps {
+    mode?: 'create' | 'edit';
 }
 
-export const OrderForm: React.FC<OrderFormProps> = ({ mode }) => {
+export const OrderForm: React.FC<OrderFormProps> = ({ mode = 'create' }) => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -42,19 +42,19 @@ export const OrderForm: React.FC<OrderFormProps> = ({ mode }) => {
         }
     };
 
-    const onFinish = async (values: any) => {
+    const onFinish = async (values: Partial<Order>) => {
         try {
             setLoading(true);
-            if (mode === 'create') {
-                await OrderService.createOrder(values);
-                message.success('Order created successfully');
-            } else if (id) {
+            if (mode === 'edit' && id) {
                 await OrderService.updateOrder(parseInt(id), values);
                 message.success('Order updated successfully');
+            } else {
+                await OrderService.createOrder(values as Omit<Order, 'id'>);
+                message.success('Order created successfully');
             }
             navigate('/orders');
         } catch (error) {
-            message.error('Failed to save order');
+            message.error(`Failed to ${mode} order`);
         } finally {
             setLoading(false);
         }
