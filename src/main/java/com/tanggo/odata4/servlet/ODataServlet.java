@@ -2,6 +2,8 @@ package com.tanggo.odata4.servlet;
 
 import com.tanggo.odata4.processor.OrderEntityCollectionProcessor;
 import com.tanggo.odata4.processor.OrderEntityProcessor;
+
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +20,7 @@ public class ODataServlet extends HttpServlet {
     private final OrderEntityProcessor entityProcessor;
     private final OrderEntityCollectionProcessor entityCollectionProcessor;
 
-    public ODataServlet(OData odata, 
+    public ODataServlet(OData odata,
                        ServiceMetadata serviceMetadata,
                        OrderEntityProcessor entityProcessor,
                        OrderEntityCollectionProcessor entityCollectionProcessor) {
@@ -29,21 +31,21 @@ public class ODataServlet extends HttpServlet {
     }
 
     @Override
-    protected void service(HttpServletRequest req, HttpServletResponse resp) 
+    protected void service(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException {
         try {
             // 创建处理器
             ODataHttpHandler handler = odata.createHandler(serviceMetadata);
-            
+
             // 注册处理器
             handler.register(entityProcessor);
             handler.register(entityCollectionProcessor);
-            
+
             // 处理请求
             handler.process(req, resp);
-            
+
         } catch (Exception e) {
             throw new ServletException(e);
         }
     }
-} 
+}
