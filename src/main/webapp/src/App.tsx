@@ -1,29 +1,22 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Layout } from 'antd';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { MainLayout } from './components/layout/MainLayout';
 import { OrderList } from './components/OrderList';
 import { OrderForm } from './components/OrderForm';
 
-const { Header, Content } = Layout;
-
 const App: React.FC = () => {
-  return (
-    <Router>
-      <Layout>
-        <Header style={{ color: 'white', fontSize: '20px' }}>
-          Order Management System
-        </Header>
-        <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)' }}>
-          <Routes>
-            <Route path="/" element={<OrderList />} />
-            <Route path="/orders" element={<OrderList />} />
-            <Route path="/orders/new" element={<OrderForm mode="create" />} />
-            <Route path="/orders/:id/edit" element={<OrderForm mode="edit" />} />
-          </Routes>
-        </Content>
-      </Layout>
-    </Router>
-  );
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<MainLayout />}>
+                    <Route index element={<Navigate to="/orders" replace />} />
+                    <Route path="orders" element={<OrderList />} />
+                    <Route path="orders/new" element={<OrderForm />} />
+                    <Route path="orders/:id/edit" element={<OrderForm />} />
+                </Route>
+            </Routes>
+        </Router>
+    );
 };
 
 export default App; 
