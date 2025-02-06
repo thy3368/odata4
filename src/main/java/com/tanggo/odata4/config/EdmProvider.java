@@ -26,14 +26,20 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
 
     // Entity Types Names
     public static final String ET_ORDER_NAME = "Order";
-    public static final FullQualifiedName ET_ORDER_FQN = new FullQualifiedName(NAMESPACE, ET_ORDER_NAME);
-
     public static final String ET_ORDER_ITEM_NAME = "OrderItem";
+    public static final String ET_USER_NAME = "User";
+    public static final String ET_PRODUCT_NAME = "Product";
+
+    public static final FullQualifiedName ET_ORDER_FQN = new FullQualifiedName(NAMESPACE, ET_ORDER_NAME);
     public static final FullQualifiedName ET_ORDER_ITEM_FQN = new FullQualifiedName(NAMESPACE, ET_ORDER_ITEM_NAME);
+    public static final FullQualifiedName ET_USER_FQN = new FullQualifiedName(NAMESPACE, ET_USER_NAME);
+    public static final FullQualifiedName ET_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCT_NAME);
 
     // Entity Set Names
     public static final String ES_ORDERS_NAME = "Orders";
     public static final String ES_ORDER_ITEMS_NAME = "OrderItems";
+    public static final String ES_USERS_NAME = "Users";
+    public static final String ES_PRODUCTS_NAME = "Products";
 
     // 添加操作定义
     public static final FullQualifiedName ACTION_AUDIT_ORDER = new FullQualifiedName(NAMESPACE, "AuditOrder");
@@ -52,38 +58,33 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
 
     @Override
     public List<CsdlSchema> getSchemas() {
-        try {
-            CsdlSchema schema = new CsdlSchema();
-            schema.setNamespace(NAMESPACE);
+        CsdlSchema schema = new CsdlSchema();
+        schema.setNamespace(NAMESPACE);
 
-            List<CsdlEntityType> entityTypes = new ArrayList<>();
-            entityTypes.add(getEntityType(ET_ORDER_FQN));
-            entityTypes.add(getEntityType(ET_ORDER_ITEM_FQN));
-            schema.setEntityTypes(entityTypes);
+        List<CsdlEntityType> entityTypes = new ArrayList<>();
+        entityTypes.add(getEntityType(ET_ORDER_FQN));
+        entityTypes.add(getEntityType(ET_ORDER_ITEM_FQN));
+        entityTypes.add(getEntityType(ET_USER_FQN));
+        entityTypes.add(getEntityType(ET_PRODUCT_FQN));
+        schema.setEntityTypes(entityTypes);
 
-            schema.setEntityContainer(getEntityContainer());
+        schema.setEntityContainer(getEntityContainer());
 
-            return Collections.singletonList(schema);
-        } catch (Exception e) {
-            throw new RuntimeException("Error creating schema", e);
-        }
+        return Collections.singletonList(schema);
     }
 
     @Override
     public CsdlEntityContainer getEntityContainer() {
-        try {
-            List<CsdlEntitySet> entitySets = new ArrayList<>();
-            entitySets.add(getEntitySet(CONTAINER, ES_ORDERS_NAME));
-            entitySets.add(getEntitySet(CONTAINER, ES_ORDER_ITEMS_NAME));
+        List<CsdlEntitySet> entitySets = Arrays.asList(
+            getEntitySet(CONTAINER, ES_ORDERS_NAME),
+            getEntitySet(CONTAINER, ES_ORDER_ITEMS_NAME),
+            getEntitySet(CONTAINER, ES_USERS_NAME),
+            getEntitySet(CONTAINER, ES_PRODUCTS_NAME)
+        );
 
-            CsdlEntityContainer entityContainer = new CsdlEntityContainer();
-            entityContainer.setName(CONTAINER_NAME);
-            entityContainer.setEntitySets(entitySets);
-
-            return entityContainer;
-        } catch (Exception e) {
-            throw new RuntimeException("Error creating entity container", e);
-        }
+        return new CsdlEntityContainer()
+            .setName(CONTAINER_NAME)
+            .setEntitySets(entitySets);
     }
 
     @Override
@@ -96,64 +97,115 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
 
     @Override
     public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) {
-        if (entityContainer.equals(CONTAINER)) {
-            if (entitySetName.equals(ES_ORDERS_NAME)) {
-                CsdlEntitySet entitySet = new CsdlEntitySet();
-                entitySet.setName(ES_ORDERS_NAME);
-                entitySet.setType(ET_ORDER_FQN);
-                return entitySet;
-            }
-            if (entitySetName.equals(ES_ORDER_ITEMS_NAME)) {
-                CsdlEntitySet entitySet = new CsdlEntitySet();
-                entitySet.setName(ES_ORDER_ITEMS_NAME);
-                entitySet.setType(ET_ORDER_ITEM_FQN);
-                return entitySet;
-            }
+        if (!entityContainer.equals(CONTAINER)) {
+            return null;
         }
-        return null;
+
+        switch (entitySetName) {
+            case ES_ORDERS_NAME:
+                return new CsdlEntitySet()
+                    .setName(ES_ORDERS_NAME)
+                    .setType(ET_ORDER_FQN)
+                    .setNavigationPropertyBindings(Arrays.asList(
+                        new CsdlNavigationPropertyBinding().setPath("Items").setTarget(ES_ORDER_ITEMS_NAME),
+                        new CsdlNavigationPropertyBinding().setPath("User").setTarget(ES_USERS_NAME)
+                    ));
+
+            case ES_ORDER_ITEMS_NAME:
+                return new CsdlEntitySet()
+                    .setName(ES_ORDER_ITEMS_NAME)
+                    .setType(ET_ORDER_ITEM_FQN)
+                    .setNavigationPropertyBindings(Arrays.asList(
+                        new CsdlNavigationPropertyBinding().setPath("Order").setTarget(ES_ORDERS_NAME),
+                        new CsdlNavigationPropertyBinding().setPath("Product").setTarget(ES_PRODUCTS_NAME)
+                    ));
+
+            case ES_USERS_NAME:
+                return new CsdlEntitySet()
+                    .setName(ES_USERS_NAME)
+                    .setType(ET_USER_FQN)
+                    .setNavigationPropertyBindings(Collections.singletonList(
+                        new CsdlNavigationPropertyBinding().setPath("Orders").setTarget(ES_ORDERS_NAME)
+                    ));
+
+            case ES_PRODUCTS_NAME:
+                return new CsdlEntitySet()
+                    .setName(ES_PRODUCTS_NAME)
+                    .setType(ET_PRODUCT_FQN);
+
+            default:
+                return null;
+        }
     }
 
     @Override
     public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
-        if (entityTypeName.equals(ET_ORDER_FQN)) {
-            CsdlEntityType entityType = new CsdlEntityType();
-            entityType.setName(ET_ORDER_NAME);
-
-            List<CsdlProperty> properties = new ArrayList<>();
-            properties.add(new CsdlProperty().setName("Id").setType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName()).setNullable(false));
-            properties.add(new CsdlProperty().setName("OrderDate").setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setNullable(true));
-
-            entityType.setProperties(properties);
-
-            CsdlPropertyRef propertyRef = new CsdlPropertyRef();
-            propertyRef.setName("Id");
-            entityType.setKey(Collections.singletonList(propertyRef));
-
-            return entityType;
-        } else if (entityTypeName.equals(ET_ORDER_ITEM_FQN)) {
-            CsdlProperty id = new CsdlProperty().setName("Id").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
-
-            CsdlProperty productCode = new CsdlProperty().setName("ProductCode").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-
-            CsdlProperty productName = new CsdlProperty().setName("ProductName").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-
-            CsdlProperty unitPrice = new CsdlProperty().setName("UnitPrice").setType(EdmPrimitiveTypeKind.Decimal.getFullQualifiedName()).setPrecision(19).setScale(4);
-
-            CsdlProperty quantity = new CsdlProperty().setName("Quantity").setType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName());
-
-            CsdlProperty subtotal = new CsdlProperty().setName("Subtotal").setType(EdmPrimitiveTypeKind.Decimal.getFullQualifiedName()).setPrecision(19).setScale(4);
-
-            CsdlProperty notes = new CsdlProperty().setName("Notes").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()).setNullable(true);
-
-            // Navigation Property back to Order
-            CsdlNavigationProperty order = new CsdlNavigationProperty().setName("Order").setType(ET_ORDER_FQN).setNullable(false).setPartner("Items");
-
-            List<CsdlProperty> entityTypeProperties = Arrays.asList(id, productCode, productName, unitPrice, quantity, subtotal, notes);
-
-            return new CsdlEntityType().setName(ET_ORDER_ITEM_NAME).setProperties(entityTypeProperties).setNavigationProperties(Collections.singletonList(order)).setKey(Collections.singletonList(new CsdlPropertyRef().setName("Id")));
+        if (entityTypeName == null) {
+            return null;
         }
 
-        return null;
+        switch (entityTypeName.getName()) {
+            case ET_ORDER_NAME:
+                return new CsdlEntityType()
+                    .setName(ET_ORDER_NAME)
+                    .setProperties(Arrays.asList(
+                        new CsdlProperty().setName("Id").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()),
+                        new CsdlProperty().setName("OrderNumber").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()),
+                        new CsdlProperty().setName("OrderDate").setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()),
+                        new CsdlProperty().setName("TotalAmount").setType(EdmPrimitiveTypeKind.Double.getFullQualifiedName()),
+                        new CsdlProperty().setName("Status").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName())
+                    ))
+                    .setNavigationProperties(Arrays.asList(
+                        new CsdlNavigationProperty().setName("Items").setType(ET_ORDER_ITEM_FQN).setCollection(true),
+                        new CsdlNavigationProperty().setName("User").setType(ET_USER_FQN)
+                    ))
+                    .setKey(Collections.singletonList(new CsdlPropertyRef().setName("Id")));
+
+            case ET_ORDER_ITEM_NAME:
+                return new CsdlEntityType()
+                    .setName(ET_ORDER_ITEM_NAME)
+                    .setProperties(Arrays.asList(
+                        new CsdlProperty().setName("Id").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()),
+                        new CsdlProperty().setName("Quantity").setType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName()),
+                        new CsdlProperty().setName("UnitPrice").setType(EdmPrimitiveTypeKind.Double.getFullQualifiedName())
+                    ))
+                    .setNavigationProperties(Arrays.asList(
+                        new CsdlNavigationProperty().setName("Order").setType(ET_ORDER_FQN),
+                        new CsdlNavigationProperty().setName("Product").setType(ET_PRODUCT_FQN)
+                    ))
+                    .setKey(Collections.singletonList(new CsdlPropertyRef().setName("Id")));
+
+            case ET_USER_NAME:
+                return new CsdlEntityType()
+                    .setName(ET_USER_NAME)
+                    .setProperties(Arrays.asList(
+                        new CsdlProperty().setName("Id").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()),
+                        new CsdlProperty().setName("Username").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()),
+                        new CsdlProperty().setName("Email").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()),
+                        new CsdlProperty().setName("Phone").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()),
+                        new CsdlProperty().setName("Address").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName())
+                    ))
+                    .setNavigationProperties(Collections.singletonList(
+                        new CsdlNavigationProperty().setName("Orders").setType(ET_ORDER_FQN).setCollection(true)
+                    ))
+                    .setKey(Collections.singletonList(new CsdlPropertyRef().setName("Id")));
+
+            case ET_PRODUCT_NAME:
+                return new CsdlEntityType()
+                    .setName(ET_PRODUCT_NAME)
+                    .setProperties(Arrays.asList(
+                        new CsdlProperty().setName("Id").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()),
+                        new CsdlProperty().setName("Name").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()),
+                        new CsdlProperty().setName("Description").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()),
+                        new CsdlProperty().setName("Price").setType(EdmPrimitiveTypeKind.Decimal.getFullQualifiedName()),
+                        new CsdlProperty().setName("Stock").setType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName()),
+                        new CsdlProperty().setName("ImageUrl").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName())
+                    ))
+                    .setKey(Collections.singletonList(new CsdlPropertyRef().setName("Id")));
+
+            default:
+                return null;
+        }
     }
 
     @Override

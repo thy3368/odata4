@@ -6,16 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
     // 基础的CRUD操作由JpaRepository提供
     // 可以根据需要添加自定义查询方法
     
-    @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items")
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.items LEFT JOIN FETCH o.user")
     List<Order> findAllWithItems();
     
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id")
-    Optional<Order> findByIdWithItems(Long id);
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.items LEFT JOIN FETCH o.user WHERE o.id = :id")
+    Order findByIdWithItems(Long id);
 } 
